@@ -12,23 +12,28 @@ litellm.cache = Cache(type="local")
 litellm.telemetry = False
 
 
+def _normalize_model_name(name: str, default_provider: str) -> str:
+    if "/" in name:
+        return name
+    return f"{default_provider}/{name}"
+
+
 class LLMGateway:
     """
     Zero-Cost LLM Gateway utilizing LiteLLM with multi-provider fallback
     and exact response caching.
 
     Fallback Priority:
-      1. Primary (Speed): Groq (Llama 3.1 8B / 70B)
-      2. Fallback 1 (Context Window): Google AI Studio (Gemini 1.5 Flash)
-      3. Fallback 2 (Redundancy): Cohere (Command-R)
+      1. Primary (Speed): Groq
+      2. Fallback 1 (Context Window): Google AI Studio (Gemini Flash)
+      3. Fallback 2 (Redundancy): Cohere
     """
 
-    PRIMARY_MODEL = "groq/llama-3.1-8b-instant"
-    FALLBACK_MODEL_1 = "gemini/gemini-1.5-flash"
-    FALLBACK_MODEL_2 = "cohere/command-r"
-    EMBEDDING_MODEL = "gemini/text-embedding-004"
-
     def __init__(self) -> None:
+        self.PRIMARY_MODEL = _normalize_model_name(settings.GROQ_MODEL, "groq")
+        self.FALLBACK_MODEL_1 = _normalize_model_name(settings.GEMINI_CHAT_MODEL, "gemini")
+        self.FALLBACK_MODEL_2 = _normalize_model_name(settings.COHERE_MODEL, "cohere")
+        self.EMBEDDING_MODEL = _normalize_model_name(settings.GEMINI_EMBEDDING_MODEL, "gemini")
         self._setup_router()
 
     def _setup_router(self) -> None:

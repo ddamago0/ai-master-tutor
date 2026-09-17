@@ -20,10 +20,17 @@ class Settings(BaseSettings):
     # Semantic Cache
     CHROMA_PERSIST_DIRECTORY: str = "./chroma_data"
 
-    # LLM Keys
+    # API Keys
     GEMINI_API_KEY: str = ""
     GROQ_API_KEY: str = ""
     COHERE_API_KEY: str = ""
+
+    # Model identifiers
+    GEMINI_CHAT_MODEL: str = "gemini/gemini-1.5-flash"
+    GEMINI_EMBEDDING_MODEL: str = "gemini/text-embedding-004"
+    GROQ_MODEL: str = "groq/llama-3.1-8b-instant"
+    COHERE_MODEL: str = "cohere/command-r"
+    MAX_OUTPUT_TOKENS: int = 1024
 
     class Config:
         env_file = ".env"
