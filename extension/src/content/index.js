@@ -1,39 +1,19 @@
-// AI Master Tutor - DOM Content Extractor (Content Script)
+// AI Master Tutor - DOM Content Extractor (Content Script Runtime)
 
-interface PageInspection {
-  detected: boolean;
-  platform: "moodle" | "q10" | "canvas" | "manual";
-  title: string;
-  charCount: number;
-}
-
-interface ExtractedPayload {
-  title: string;
-  rawContent: string;
-  sourceType: "moodle" | "q10" | "canvas" | "manual";
-  sourceUrl: string;
-  metadata: Record<string, unknown>;
-}
-
-// Selectors prioritized by LMS platform
 const LMS_CONTENT_SELECTORS = [
-  // Moodle primary content areas
   "#region-main",
   ".course-content",
   ".activity-information",
   "[role='main']",
-  // Q10 academic content selectors
   "#divContenido",
   ".contenido-clase",
   ".q10-content",
-  // Canvas & general academic semantic containers
   "#content.ic-Layout-contentMain",
   "#main",
   "main",
   "article",
 ];
 
-// Elements and classes that introduce navigational noise
 const NOISE_SELECTORS = [
   "nav",
   "header",
@@ -61,7 +41,7 @@ const NOISE_SELECTORS = [
   ".drawer",
 ];
 
-function detectPlatform(): "moodle" | "q10" | "canvas" | "manual" {
+function detectPlatform() {
   const host = window.location.hostname.toLowerCase();
   const html = document.documentElement.innerHTML;
 
@@ -90,22 +70,19 @@ function detectPlatform(): "moodle" | "q10" | "canvas" | "manual" {
   return "manual";
 }
 
-function extractPageTitle(): string {
-  // 1. Try finding primary content header
+function extractPageTitle() {
   const h1 = document.querySelector("main h1, #region-main h1, .page-header-headings h1, h1");
-  if (h1 && h1.textContent?.trim()) {
+  if (h1 && h1.textContent && h1.textContent.trim()) {
     return h1.textContent.trim();
   }
 
-  // 2. Fallback to document title, stripping common suffixes
-  let title = document.title || "Material de Estudio Sin Título";
+  let title = document.title || "Material de Estudio";
   title = title.split(/[|\-–:]/)[0].trim();
   return title || "Material de Estudio";
 }
 
-function extractCleanDOMText(): { text: string; selectorUsed: string } {
-  // Find the most specific educational container available
-  let targetElement: Element | null = null;
+function extractCleanDOMText() {
+  let targetElement = null;
   let selectorUsed = "body";
 
   for (const selector of LMS_CONTENT_SELECTORS) {
@@ -121,18 +98,14 @@ function extractCleanDOMText(): { text: string; selectorUsed: string } {
     targetElement = document.body;
   }
 
-  // Clone node to safely strip noise without altering the active page DOM
-  const clone = targetElement.cloneNode(true) as HTMLElement;
+  const clone = targetElement.cloneNode(true);
 
   for (const noiseSelector of NOISE_SELECTORS) {
     const noiseNodes = clone.querySelectorAll(noiseSelector);
     noiseNodes.forEach((node) => node.remove());
   }
 
-  // Extract clean innerText
   const rawText = clone.innerText || clone.textContent || "";
-  
-  // Normalize whitespace while preserving paragraphs
   const clean = rawText
     .replace(/\r\n|\r/g, "\n")
     .replace(/[ \t]+/g, " ")
@@ -142,17 +115,15 @@ function extractCleanDOMText(): { text: string; selectorUsed: string } {
   return { text: clean, selectorUsed };
 }
 
-// Listen for messages from Popup and Background service worker
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   if (request.action === "CHECK_CONTENT") {
     const { text } = extractCleanDOMText();
-    const inspection: PageInspection = {
+    sendResponse({
       detected: text.length > 50,
       platform: detectPlatform(),
       title: extractPageTitle(),
       charCount: text.length,
-    };
-    sendResponse(inspection);
+    });
     return true;
   }
 
@@ -161,7 +132,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     const platform = detectPlatform();
     const title = extractPageTitle();
 
-    const payload: ExtractedPayload = {
+    sendResponse({
       title: title,
       rawContent: text,
       sourceType: platform,
@@ -172,9 +143,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
         selectorUsed: selectorUsed,
         charCount: text.length,
       },
-    };
-
-    sendResponse(payload);
+    });
     return true;
   }
 });

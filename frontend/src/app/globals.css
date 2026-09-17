@@ -3,12 +3,39 @@
 @tailwind utilities;
 
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --bg-pure: #000000;
+  --fg-main: #FFFFFF;
+  --color-coral: #FF5733;
+  --color-cobalt: #0047AB;
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
+html, body {
+  background-color: var(--bg-pure);
+  color: var(--fg-main);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  overflow-x: hidden;
+}
+
+/* Custom minimal scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #222222;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-cobalt);
+}
+
+::selection {
+  background: var(--color-coral);
+  color: #000000;
 }

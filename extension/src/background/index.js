@@ -1,23 +1,14 @@
-// AI Master Tutor - Background Service Worker
+// AI Master Tutor - Background Service Worker (Runtime)
 
 const BACKEND_INGEST_URL = "http://localhost:8000/api/v1/materials/ingest";
-
-interface IngestPayload {
-  title: string;
-  rawContent: string;
-  sourceType: string;
-  sourceUrl: string;
-  metadata: Record<string, unknown>;
-}
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log("[AI Master Tutor] Service Worker active");
 });
 
-// Relay extraction payloads from popup/content to FastAPI backend
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === "SEND_TO_BACKEND") {
-    const payload: IngestPayload = message.payload;
+    const payload = message.payload;
 
     fetch(BACKEND_INGEST_URL, {
       method: "POST",
@@ -44,7 +35,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       .then((data) => {
         sendResponse({ success: true, data });
       })
-      .catch((err: Error) => {
+      .catch((err) => {
         console.error("[AI Master Tutor] Ingest failed:", err);
         sendResponse({
           success: false,
@@ -55,6 +46,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         });
       });
 
-    return true; // Keep channel open for async fetch
+    return true; // Keep message port open for async fetch
   }
 });
